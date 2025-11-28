@@ -19,7 +19,7 @@ import { deepPurple } from "@material-ui/core/colors";
 import Rooms from "./Rooms";
 import { GoSignOut } from "react-icons/go";
 import { FaUserEdit } from "react-icons/fa";
-import { auth, db } from "../Firebase/Firebase";
+import { auth, db, signOut as firebaseSignOut } from "../Firebase/Firebase"; // modular
 import { Link } from "react-router-dom";
 import EditProfile from "./EditProfile";
 import Fade from "@material-ui/core/Fade";
@@ -45,179 +45,93 @@ const StyledBadge = withStyles((theme) => ({
     },
   },
   "@keyframes ripple": {
-    "0%": {
-      transform: "scale(.8)",
-      opacity: 1,
-    },
-    "100%": {
-      transform: "scale(2.4)",
-      opacity: 0,
-    },
+    "0%": { transform: "scale(.8)", opacity: 1 },
+    "100%": { transform: "scale(2.4)", opacity: 0 },
   },
 }))(Badge);
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    display: "flex",
-  },
-  avatarGrid: {
-    paddingTop: "20px",
-    paddingLeft: "5px",
-    paddingBottom: "20px",
-    color: "#dcddde",
-  },
-  avatarIcon: {
-    display: "flex",
-    paddingLeft: "10px",
-    paddingRight: "10px",
-  },
-  avatarName: {
-    fontSize: "1em",
-    paddingLeft: "12px",
-    paddingTop: "8px",
-  },
-  avatarDisplayName: {
-    alignSelf: "center",
-    paddingLeft: "10px",
-    fontWeight: "600",
-  },
-  purple: {
-    color: theme.palette.getContrastText(deepPurple[500]),
-    backgroundColor: "#3f51b5",
-  },
-  drawer: {
-    [theme.breakpoints.up("sm")]: {
-      width: drawerWidth,
-      flexShrink: 0,
-    },
-  },
+  root: { display: "flex" },
+  avatarGrid: { paddingTop: 20, paddingLeft: 5, paddingBottom: 20, color: "#dcddde" },
+  avatarIcon: { display: "flex", paddingLeft: 10, paddingRight: 10 },
+  avatarName: { fontSize: "1em", paddingLeft: 12, paddingTop: 8 },
+  avatarDisplayName: { alignSelf: "center", paddingLeft: 10, fontWeight: 600 },
+  purple: { color: theme.palette.getContrastText(deepPurple[500]), backgroundColor: "#3f51b5" },
+  drawer: { [theme.breakpoints.up("sm")]: { width: drawerWidth, flexShrink: 0 } },
   appBar: {
-    [theme.breakpoints.up("sm")]: {
-      width: `calc(100% - ${drawerWidth}px)`,
-      marginLeft: drawerWidth,
-    },
+    [theme.breakpoints.up("sm")]: { width: `calc(100% - ${drawerWidth}px)`, marginLeft: drawerWidth },
     backgroundColor: "#22273b",
     color: "#dcddde",
-    boxShadow:
-      "0 1px 0 rgba(4,4,5,0.2),0 1.5px 0 rgba(6,6,7,0.05),0 2px 0 rgba(4,4,5,0.05);",
+    boxShadow: "0 1px 0 rgba(4,4,5,0.2),0 1.5px 0 rgba(6,6,7,0.05),0 2px 0 rgba(4,4,5,0.05);",
   },
-  menuButton: {
-    marginRight: theme.spacing(2),
-    [theme.breakpoints.up("sm")]: {
-      display: "none",
-    },
-  },
-  // necessary for content to be below app bar
+  menuButton: { marginRight: theme.spacing(2), [theme.breakpoints.up("sm")]: { display: "none" } },
   toolbar: theme.mixins.toolbar,
-  drawerPaper: {
-    width: drawerWidth,
-    backgroundColor: "#171c2e",
-    color: "white",
-  },
+  drawerPaper: { width: drawerWidth, backgroundColor: "#171c2e", color: "white" },
   sideToolBar: {
     backgroundColor: "#171c2e",
     color: "#fff",
     lineHeight: 1.6,
-    boxShadow:
-      "0 1px 0 rgba(4,4,5,0.2),0 1.5px 0 rgba(6,6,7,0.05),0 2px 0 rgba(4,4,5,0.05);",
-    minHeight: "50px",
+    boxShadow: "0 1px 0 rgba(4,4,5,0.2),0 1.5px 0 rgba(6,6,7,0.05),0 2px 0 rgba(4,4,5,0.05);",
+    minHeight: 50,
   },
-  sideToolBarText: {
-    letterSpacing: "0.2em",
-    fontWeight: "900",
-  },
-  title: {
-    flexGrow: 1,
-  },
+  sideToolBarText: { letterSpacing: "0.2em", fontWeight: 900 },
+  title: { flexGrow: 1 },
 }));
 
 function Application(props) {
   const { window, uid } = props;
   const classes = useStyles();
   const theme = useTheme();
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [userDetails, setUserDetails] = useState([]);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
   const [editProfileModal, setEditProfileModal] = useState(false);
   const [alert, setAlert] = useState(false);
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    db.collection("users")
-      .doc(uid)
-      .onSnapshot((doc) => {
+    if (!uid) return;
+    const unsubscribe = db.collection("users").doc(uid).onSnapshot((doc) => {
+      if (doc.exists) {
         setUserDetails(doc.data());
         localStorage.setItem("userDetails", JSON.stringify(doc.data()));
-      });
+      }
+    });
+    return () => unsubscribe();
   }, [uid]);
 
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const handleMenu = (event) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+  const toggleEditProfile = () => setEditProfileModal(!editProfileModal);
+  const handleAlert = () => setAlert(!alert);
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const toggleEditProfile = () => {
-    setEditProfileModal(!editProfileModal);
-  };
-
-  const handleAlert = () => {
-    setAlert(!alert);
-  };
-
-  const signOut = () => {
-    auth
-      .signOut()
-      .then(() => {
-        console.log("signed out");
-        localStorage.clear();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  const signOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+      localStorage.clear();
+      console.log("Signed out successfully");
+    } catch (err) {
+      console.error("Sign out error:", err);
+    }
   };
 
   const drawer = userDetails && (
     <div>
       <Toolbar className={classes.sideToolBar}>
-        <Typography variant="h6" className={classes.sideToolBarText}>
-          CHATIFY
-        </Typography>
+        <Typography variant="h6" className={classes.sideToolBarText}>CHATIFY</Typography>
       </Toolbar>
       <Divider />
       <Grid className={classes.avatarGrid}>
         <div className={classes.avatarIcon}>
-          <StyledBadge
-            overlap="circle"
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            variant="dot"
-          >
-            <Avatar
-              alt={userDetails.name}
-              src={userDetails.photoURL}
-              className={classes.purple}
-            />
+          <StyledBadge overlap="circle" anchorOrigin={{ vertical: "bottom", horizontal: "right" }} variant="dot">
+            <Avatar alt={userDetails.name} src={userDetails.photoURL} className={classes.purple} />
           </StyledBadge>
-          <Typography variant="h6" className={classes.avatarDisplayName}>
-            {userDetails.displayName}
-          </Typography>
+          <Typography variant="h6" className={classes.avatarDisplayName}>{userDetails.displayName}</Typography>
         </div>
         <div>
-          <Typography variant="h4" className={classes.avatarName}>
-            {userDetails.name}
-          </Typography>
-          <Typography variant="h4" className={classes.avatarName}>
-            {userDetails.email}
-          </Typography>
+          <Typography variant="h4" className={classes.avatarName}>{userDetails.name}</Typography>
+          <Typography variant="h4" className={classes.avatarName}>{userDetails.email}</Typography>
         </div>
       </Grid>
       <Divider />
@@ -226,12 +140,11 @@ function Application(props) {
     </div>
   );
 
-  const container =
-    window !== undefined ? () => window().document.body : undefined;
+  const container = window !== undefined ? () => window().document.body : undefined;
+
   return (
     <div className={classes.root}>
       <CssBaseline />
-
       <Snackbar
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
         open={alert}
@@ -245,95 +158,44 @@ function Application(props) {
           </IconButton>
         }
       />
-
-      {editProfileModal ? (
-        <EditProfile toggler={toggleEditProfile} alert={handleAlert} />
-      ) : null}
-
+      {editProfileModal && <EditProfile toggler={toggleEditProfile} alert={handleAlert} />}
       <AppBar position="fixed" className={classes.appBar}>
-        <Toolbar style={{ minHeight: "50px" }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
+        <Toolbar style={{ minHeight: 50 }}>
+          <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={handleDrawerToggle} className={classes.menuButton}>
             <MenuIcon />
           </IconButton>
-
           <Typography variant="h6" className={classes.title}>
-            <Link to="/" style={{ textDecoration: "none", color: "#dcddde" }}>
-              Home
-            </Link>
+            <Link to="/" style={{ textDecoration: "none", color: "#dcddde" }}>Home</Link>
           </Typography>
-
           <div>
-            <IconButton
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit"
-            >
+            <IconButton aria-label="account of current user" aria-controls="menu-appbar" aria-haspopup="true" onClick={handleMenu} color="inherit">
               <AccountCircle />
             </IconButton>
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
               getContentAnchorEl={null}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "center",
-              }}
+              anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
               keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "center",
-              }}
+              transformOrigin={{ vertical: "top", horizontal: "center" }}
               open={open}
               onClose={handleClose}
             >
-              <MenuItem onClick={toggleEditProfile}>
-                <FaUserEdit /> &nbsp; Edit Profile
-              </MenuItem>
-
-              <MenuItem onClick={signOut}>
-                <GoSignOut /> &nbsp; Sign Out of Chatify
-              </MenuItem>
+              <MenuItem onClick={toggleEditProfile}><FaUserEdit /> &nbsp; Edit Profile</MenuItem>
+              <MenuItem onClick={signOut}><GoSignOut /> &nbsp; Sign Out of Chatify</MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
 
       <nav className={classes.drawer} aria-label="chat rooms">
-        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
         <Hidden smUp implementation="css">
-          <Drawer
-            container={container}
-            variant="temporary"
-            anchor={theme.direction === "rtl" ? "right" : "left"}
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            ModalProps={{
-              keepMounted: true, // Better open performance on mobile.
-            }}
-          >
+          <Drawer container={container} variant="temporary" anchor={theme.direction === "rtl" ? "right" : "left"} open={mobileOpen} onClose={handleDrawerToggle} classes={{ paper: classes.drawerPaper }} ModalProps={{ keepMounted: true }}>
             {drawer}
           </Drawer>
         </Hidden>
-
         <Hidden xsDown implementation="css">
-          <Drawer
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            variant="permanent"
-            open
-          >
+          <Drawer classes={{ paper: classes.drawerPaper }} variant="permanent" open>
             {drawer}
           </Drawer>
         </Hidden>

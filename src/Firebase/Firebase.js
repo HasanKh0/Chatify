@@ -1,10 +1,24 @@
-// Firebase.js
+// src/Firebase/Firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut
+} from "firebase/auth";
+import {
+  getFirestore,
+  Timestamp,
+  collection,
+  doc,
+  addDoc,
+  onSnapshot,
+  orderBy,
+  query
+} from "firebase/firestore";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
-// Firebase config from environment variables
+// Firebase configuration (from .env)
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -17,12 +31,31 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Auth, Firestore, Storage instances
+// Auth
 const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-// Google Auth provider
 const provider = new GoogleAuthProvider();
 
-export { auth, provider, db, storage };
+// Firestore
+const db = getFirestore(app);
+
+// Storage
+const storage = getStorage(app);
+
+export {
+  auth,
+  provider,
+  signInWithPopup,
+  signOut,
+  db,
+  Timestamp,
+  collection,
+  doc,
+  addDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  storage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+};

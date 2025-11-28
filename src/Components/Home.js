@@ -7,47 +7,18 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import CardContent from "@material-ui/core/CardContent";
 import Avatar from "@material-ui/core/Avatar";
 import { db } from "../Firebase/Firebase";
-import { useHistory } from "react-router-dom";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { useHistory } from "react-router-dom"; // v5
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    paddingTop: "50px",
-    paddingBottom: "25px",
-    color: "#f0f0f0",
-  },
-  heading: {
-    fontSize: "2.2em",
-    fontWeight: "700",
-  },
-  subHeading: {
-    fontSize: "1.6em",
-  },
-  channelDiv: {
-    padding: "15px",
-  },
-  channelContent: {
-    display: "flex",
-    flexDirection: "column",
-    textAlign: "center",
-    padding: "20px",
-    alignItems: "center",
-  },
-  square: {
-    height: "80px",
-    width: "80px",
-    backgroundColor: "#8fabbd66",
-    fontSize: "2rem",
-  },
-  rootChannel: {
-    height: "calc(100vh - 185px)",
-    position: "relative",
-    padding: "15px",
-    overflowY: "scroll",
-  },
-  channelText: {
-    paddingTop: "10px",
-    fontSize: "1.2rem",
-  },
+  root: { paddingTop: "50px", paddingBottom: "25px", color: "#f0f0f0" },
+  heading: { fontSize: "2.2em", fontWeight: 700 },
+  subHeading: { fontSize: "1.6em" },
+  channelDiv: { padding: "15px" },
+  channelContent: { display: "flex", flexDirection: "column", textAlign: "center", padding: "20px", alignItems: "center" },
+  square: { height: "80px", width: "80px", backgroundColor: "#8fabbd66", fontSize: "2rem" },
+  rootChannel: { height: "calc(100vh - 185px)", position: "relative", padding: "15px", overflowY: "scroll" },
+  channelText: { paddingTop: "10px", fontSize: "1.2rem" },
   channelCard: {
     backgroundColor: "#1e2439",
     boxShadow:
@@ -59,23 +30,26 @@ const useStyles = makeStyles((theme) => ({
 function Home() {
   const classes = useStyles();
   const [channels, setChannels] = useState([]);
-  const history = useHistory();
+  const history = useHistory(); // v5
 
   useEffect(() => {
-    db.collection("channels")
-      .orderBy("channelName", "asc")
-      .onSnapshot((snapshot) => {
-        setChannels(
-          snapshot.docs.map((channel) => ({
-            channelName: channel.data().channelName,
-            id: channel.id,
-          }))
-        );
-      });
+    const channelsRef = collection(db, "channels");
+    const q = query(channelsRef, orderBy("channelName", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setChannels(
+        snapshot.docs.map((doc) => ({
+          channelName: doc.data().channelName,
+          id: doc.id,
+        }))
+      );
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const goToChannel = (id) => {
-    history.push(`/channel/${id}`);
+    history.push(`/channel/${id}`); // v5 navigation
   };
 
   return (
@@ -93,29 +67,14 @@ function Home() {
 
       <Grid container className={classes.rootChannel}>
         {channels.map((channel) => (
-          <Grid
-            item
-            xs={6}
-            md={3}
-            className={classes.channelDiv}
-            key={channel.id}
-          >
+          <Grid item xs={6} md={3} className={classes.channelDiv} key={channel.id}>
             <Card className={classes.channelCard}>
-              <CardActionArea
-                style={{ display: "flex" }}
-                onClick={() => goToChannel(channel.id)}
-              >
+              <CardActionArea style={{ display: "flex" }} onClick={() => goToChannel(channel.id)}>
                 <CardContent className={classes.channelContent}>
-                  <Avatar
-                    variant="square"
-                    className={classes.square}
-                    style={{ backgroundColor: "#6a9ec066" }}
-                  >
-                    {channel.channelName.substr(0, 1).toUpperCase()}
+                  <Avatar variant="square" className={classes.square} style={{ backgroundColor: "#6a9ec066" }}>
+                    {channel.channelName.charAt(0).toUpperCase()}
                   </Avatar>
-                  <Typography className={classes.channelText}>
-                    {channel.channelName}
-                  </Typography>
+                  <Typography className={classes.channelText}>{channel.channelName}</Typography>
                 </CardContent>
               </CardActionArea>
             </Card>
