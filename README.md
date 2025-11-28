@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div align="center">
 
 # Chatify
@@ -52,3 +53,7 @@ You will also see any lint errors in the console.
 
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
+=======
+# Chatify
+Chat Room For Friends
+>>>>>>> 509c9ae8b1d5ed7e1c90edcb65869d8d166e1c20
