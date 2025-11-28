@@ -1,24 +1,28 @@
-import firebase from "firebase/app";
-import "firebase/auth";
-import "firebase/firestore";
-import "firebase/storage";
+// Firebase.js
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
-const provider = new firebase.auth.GoogleAuthProvider();
-
+// Firebase config from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDoN-nSGUo_1h87nkOXSXX2vv4IBXBXey0",
-  authDomain: "chatify-49.firebaseapp.com",
-  projectId: "chatify-49",
-  storageBucket: "chatify-49.appspot.com",
-  messagingSenderId: "1034185885241",
-  appId: "1:1034185885241:web:a46af138b7a40d318defe8",
-  measurementId: "G-EHQ2YBVYY9",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-const firebaseApp = firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-const db = firebaseApp.firestore();
-const auth = firebase.auth();
-const storage = firebase.storage();
+// Auth, Firestore, Storage instances
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { db, auth, provider, storage };
+// Google Auth provider
+const provider = new GoogleAuthProvider();
+
+export { auth, provider, db, storage };
